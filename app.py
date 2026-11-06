@@ -5,6 +5,10 @@ from flask import Flask, render_template, request, url_for, flash, redirect, abo
 app = Flask(__name__)
 app.config["DEBUG"] = True
 
+# a secret key is required to use flash() messages (stored in the session cookie)
+# for a real deployment, set this from an environment variable instead
+app.config["SECRET_KEY"] = "dev-secret-key-change-me"
+
 
 
 # Function to open a connection to the database.db file
@@ -37,6 +41,32 @@ def index():
 
 
 # route to create a post
+@app.route('/create/', methods=('GET', 'POST'))
+def create():
+    # determine if the page is being requested with a POST or GET request
+    if request.method == 'POST':
+        # get the title and content that was submitted
+        title = request.form['title']
+        content = request.form['content']
+
+        # display an error if title or content is not submitted
+        # else make a database connection and insert the blog post content
+        if not title:
+            flash('Title is required!')
+        elif not content:
+            flash('Content is required!')
+        else:
+            conn = get_db_connection()
+            # insert data into the database
+            conn.execute('INSERT INTO posts (title, content) VALUES (?, ?)', (title, content))
+            conn.commit()
+            conn.close()
+            flash('Post created successfully!')
+            # redirect to the index page
+            return redirect(url_for('index'))
+
+    return render_template('create.html')
 
 
-app.run()
+if __name__ == '__main__':
+    app.run()
