@@ -24,6 +24,19 @@ def get_db_connection():
     return conn
 
 
+# Function to retrieve a single post from the database by its id
+def get_post(post_id):
+    conn = get_db_connection()
+    post = conn.execute('SELECT * FROM posts WHERE id = ?', (post_id,)).fetchone()
+    conn.close()
+
+    # if no post exists with that id, respond with a 404 Not Found page
+    if post is None:
+        abort(404)
+
+    return post
+
+
 # use the app.route() decorator to create a Flask view function called index()
 @app.route('/')
 def index():
@@ -38,6 +51,13 @@ def index():
 
     # send the posts to the index.html template to be displayed
     return render_template('index.html', posts=posts)
+
+
+# route to view a single post
+@app.route('/<int:post_id>/')
+def post(post_id):
+    post = get_post(post_id)
+    return render_template('post.html', post=post)
 
 
 # route to create a post
@@ -66,6 +86,33 @@ def create():
             return redirect(url_for('index'))
 
     return render_template('create.html')
+
+
+# route to edit a post
+@app.route('/<int:post_id>/edit/', methods=('GET', 'POST'))
+def edit(post_id):
+    # get the existing post (404 if it does not exist)
+    post = get_post(post_id)
+
+    if request.method == 'POST':
+        title = request.form['title']
+        content = request.form['content']
+
+        if not title:
+            flash('Title is required!')
+        elif not content:
+            flash('Content is required!')
+        else:
+            conn = get_db_connection()
+            # update the post with the new title and content
+            conn.execute('UPDATE posts SET title = ?, content = ? WHERE id = ?',
+                         (title, content, post_id))
+            conn.commit()
+            conn.close()
+            flash('Post updated successfully!')
+            return redirect(url_for('post', post_id=post_id))
+
+    return render_template('edit.html', post=post)
 
 
 if __name__ == '__main__':
