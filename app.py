@@ -43,8 +43,8 @@ def index():
     # get a connection to the database
     conn = get_db_connection()
 
-    # execute a query to read all posts from the posts table, newest first
-    posts = conn.execute('SELECT * FROM posts ORDER BY created DESC').fetchall()
+    # execute a query to read all posts from the posts table in the database
+    posts = conn.execute('SELECT * FROM posts').fetchall()
 
     # close the connection
     conn.close()
@@ -72,9 +72,9 @@ def create():
         # display an error if title or content is not submitted
         # else make a database connection and insert the blog post content
         if not title:
-            flash('Title is required!')
+            flash('Title is required')
         elif not content:
-            flash('Content is required!')
+            flash('Content is required')
         else:
             conn = get_db_connection()
             # insert data into the database
@@ -99,9 +99,9 @@ def edit(post_id):
         content = request.form['content']
 
         if not title:
-            flash('Title is required!')
+            flash('Title is required')
         elif not content:
-            flash('Content is required!')
+            flash('Content is required')
         else:
             conn = get_db_connection()
             # update the post with the new title and content
@@ -110,7 +110,8 @@ def edit(post_id):
             conn.commit()
             conn.close()
             flash('Post updated successfully!')
-            return redirect(url_for('post', post_id=post_id))
+            # redirect to the home page
+            return redirect(url_for('index'))
 
     return render_template('edit.html', post=post)
 
